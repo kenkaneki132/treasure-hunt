@@ -47,7 +47,7 @@ No environment variables, API keys or backend are needed. The fonts (Pirata One,
 
 ## Deploy
 
-- **GitHub Pages (automatic):** `.github/workflows/` tests, builds and deploys every push to `main`. One-time setup: *Settings → Pages → Source: GitHub Actions*.
+- **GitHub Pages (automatic):** `.github/workflows/deploy-pages.yml` tests and builds every push and pull request, and on `main` publishes `build/` to the `gh-pages` branch, which Pages serves (*Settings → Pages → Deploy from a branch: gh-pages*). No setup needed.
 - **Manual:** `npm run deploy` publishes `build/` with `gh-pages`.
 - Any static host works: upload `build/`. Routing uses `HashRouter`, so deep links never 404.
 
