@@ -1,13 +1,40 @@
+:root {
+  --sea-1: #0d3a4d;
+  --sea-2: #061a24;
+  --parch-1: #f7e8c4;
+  --parch-2: #ecd19c;
+  --parch-3: #d8b474;
+  --ink: #3b2412;
+  --ink-soft: #6b4a24;
+  --gold: #f2b632;
+  --gold-hi: #ffe08a;
+  --gold-deep: #a9740a;
+  --red: #c4372a;
+  --red-deep: #8a1f15;
+  --emerald: #34b27a;
+  --cream: #f8efd8;
+  --cream-dim: #c9bc9a;
+  --panel-line: rgba(242, 182, 50, 0.24);
+  --display: "Pirata One", "Georgia", serif;
+  --ui: "Rubik", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  min-height: 100vh;
+  font-family: var(--ui);
+  color: var(--cream);
+  background:
+    radial-gradient(1100px 620px at 15% -10%, #175a73 0%, transparent 60%),
+    radial-gradient(900px 520px at 110% 110%, #114a60 0%, transparent 60%),
+    linear-gradient(180deg, var(--sea-1), var(--sea-2));
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
+button, input { font: inherit; }
+a { color: var(--gold-hi); }

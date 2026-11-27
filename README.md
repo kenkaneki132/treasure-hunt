@@ -1,70 +1,98 @@
-# Getting Started with Create React App
+# 🏴‍☠️ Treasure Hunt
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A timed betting game with a treasure-hunt theme. Press **Start**, pick up to **6 numbers** on the treasure map and choose a **chip** before the 15-second timer runs out. Five treasures are hidden; any hit pays **bet × (hits + 1)**, and no hits loses the bet.
 
-## Available Scripts
+**Play:** https://kenkaneki132.github.io/treasure-hunt/
 
-In the project directory, you can run:
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/build-Vite-646CFF?logo=vite&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-33%20passing-success)
 
-### `npm start`
+Originally built during my front-end internship at **Pragmatic Play** (Jan–Jun 2023) with React, using reusable components and real-time state across a dynamic 48-cell board. This version keeps the original rules exactly; only the appearance changed.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## What it looks like
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- **The board is a treasure map**: parchment with burnt, torn edges, an island with mountains, palms, a dotted trail and a compass rose. The 48 numbers sit on the map as dig spots.
+- **Picking a number** paints a red-ink X with a burst of sand. Clicking it again removes the pick with a puff of dust.
+- **Once 6 numbers are picked the board closes** (the original 6-pick limit, now visible): every free number greys out and can't be clicked, and a ribbon explains why. Removing a pick reopens it.
+- **The reveal** pops the treasure chests open one by one, gold glowing on the numbers you hit with coins flying out. Missed picks turn into empty dug holes. A win rains coins across the screen; a loss shakes the map.
+- **Sand-clock timer** turns red and ticks for the last five seconds.
+- **Bets panel** with gold chips (1, 5, 10, 20, 25), your six picks, the bet and the reward for every possible number of hits. The **captain's log** tracks rounds, wins, win rate, best win and recent rounds.
+- **Sound effects** are synthesized in the browser (no audio files) and can be muted; the choice is remembered.
+- Works on phones (the map switches to 6 columns), with keyboard focus styles, screen-reader labels and a `prefers-reduced-motion` mode that turns every animation off.
 
-### `npm test`
+## How to play
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. **Start** opens a 15-second betting window.
+2. Pick up to 6 numbers and choose a chip (1, 5, 10, 20, 25). Your bet is `chip × picks`.
+3. **UNDO** reverts your last action. **REPEAT** restores last round's picks and chip.
+4. When the timer ends, 5 treasures are revealed. Any hit pays `bet × (hits + 1)`; no hits loses the bet.
+5. **Next round** keeps your balance; **New game** resets it to 10,000. Play money only.
 
-### `npm run build`
+## Run it on a new machine
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Requirements: **Node.js 18 or newer** (CI uses Node 22) and npm.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+git clone https://github.com/kenkaneki132/treasure-hunt.git
+cd treasure-hunt
+npm install
+npm run dev        # http://localhost:5173
+npm test           # 33 tests (Vitest + Testing Library)
+npm run build      # production build in build/
+npm run preview    # serve the production build locally
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+No environment variables, API keys or backend are needed. The fonts (Pirata One, Rubik) load from Google Fonts; without a network connection the game falls back to system fonts and still works.
 
-### `npm run eject`
+## Deploy
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- **GitHub Pages (automatic):** `.github/workflows/` tests, builds and deploys every push to `main`. One-time setup: *Settings → Pages → Source: GitHub Actions*.
+- **Manual:** `npm run deploy` publishes `build/` with `gh-pages`.
+- Any static host works: upload `build/`. Routing uses `HashRouter`, so deep links never 404.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Architecture
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```
+src/game/engine.js            pure rules: drawTreasures, settle, reducer, isLocked, payoutTable (no React, no timers)
+src/game/fx.js                WebAudio sound effects + reduced-motion check (no-ops when audio is unavailable)
+src/Components/Game.jsx       useReducer(engine), one interval per round, sound cues, coin shower
+src/Components/TreasureMap.jsx  the map, 48 dig spots, click bursts, lock ribbon, start veil
+src/Components/StatusBar.jsx  sand-clock timer, picks left, round result
+src/Components/BetSlip.jsx    balance, chips, picks, bet, reward table, UNDO/REPEAT
+src/Components/Logbook.jsx    stats, recent rounds, new game
+src/Components/MapArt.jsx     island, trail and compass (SVG)
+src/Components/Icons.jsx      chest, coins, skull and UI icons (SVG, so they look the same on every device)
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+The engine is a pure reducer (`START`, `TICK`, `TOGGLE`, `CHIP`, `UNDO`, `REPEAT`, `REVEAL`, `NEXT_ROUND`, `NEW_GAME`). Randomness is injected (`REVEAL` carries the treasures), so every rule is unit-testable and the UI tests can seed the draw.
 
-## Learn More
+## Tests
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- `src/game/engine.test.js` (25): unique treasure draws, the payout rule, the 6-pick limit, balance limits, void rounds, a payout applied exactly once, immutable undo, repeat and next round, `isLocked`, and the reward table.
+- `src/Components/Game.test.jsx` (8): a full round with fake timers (pick → chip → countdown → reveal → settle); UNDO; **the board closes after 6 picks and reopens when one is removed**; the reveal waits for the full 15 seconds; muting sound persists; every timer is cleared on unmount; routing from the start page.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+GitHub Actions runs the tests on every push and pull request, then deploys `main` to Pages.
 
-### Code Splitting
+## Changelog
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Treasure-map redesign (appearance only, rules unchanged)
+- New board: a parchment treasure map instead of a plain numbered grid, with SVG art in place of emoji.
+- Click effects (ink X, sand and dust bursts), treasure-chest reveal animation, hit glow and coin bursts, a win coin shower and a shake on a loss.
+- The board visibly closes once 6 numbers are picked (free numbers disabled and greyed, a ribbon explains why).
+- Bets panel with a reward table, captain's log with win rate and best win, how-to-play popover, sound effects you can mute.
+- New start screen; responsive phone layout; reduced-motion support.
 
-### Analyzing the Bundle Size
+### Bug fixes (portfolio-upgrade)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+| Bug in the original | Fix |
+|---|---|
+| Treasures were drawn **with replacement**, so a round could have fewer than 5 | Fisher–Yates draw of 5 unique cells |
+| `Results`/`Bets` called `setState` **during render** (render loops and warnings) | All state lives in one reducer |
+| Payout was applied in an effect that re-ran when the bet changed, so it could **apply twice** | Settled exactly once in `REVEAL` |
+| Balance could go **negative**; empty rounds took no stake but still counted | Picks and chips limited by balance; empty rounds are void |
+| Countdown interval mutated a captured variable and was **never cleared** | One interval per round, cleaned up on unmount |
+| UNDO used `.pop()` on state arrays (mutation) | Immutable snapshot stack |
+| `<body>` rendered inside `#root` (invalid HTML) | `<main>` |
+| `BrowserRouter` deep links **404 on GitHub Pages refresh** | `HashRouter` |
+| Create React App (deprecated), and the only test failed | Vite + Vitest |
