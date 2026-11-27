@@ -1,6 +1,7 @@
-# Tests, builds and publishes the game to GitHub Pages on every push to main.
-# One-time setup: Settings -> Pages -> Source: "GitHub Actions".
-# (`npm run deploy` with gh-pages still works for manual deploys.)
+# Tests and builds the game on every push and pull request. Pushes to main also publish the
+# build to the gh-pages branch, which GitHub Pages already serves (Settings -> Pages ->
+# "Deploy from a branch: gh-pages"), so no settings change is needed.
+# (`npm run deploy` with the gh-pages package still works for manual deploys.)
 name: Test & deploy to GitHub Pages
 
 on:
@@ -10,9 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
@@ -30,17 +29,10 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
+      - name: Publish build/ to the gh-pages branch
+        if: github.event_name != 'pull_request'
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: build
-
-  deploy:
-    if: github.event_name != 'pull_request'
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          publish_branch: gh-pages
